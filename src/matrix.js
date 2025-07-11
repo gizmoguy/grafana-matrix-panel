@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useD3 } from './useD3.js';
 import * as d3 from './d3.min.js';
 import { useTheme2 } from '@grafana/ui';
@@ -74,7 +75,7 @@ function createViz(elem, id, height, rowNames, colNames, matrix, options, theme,
   var tooltip = d3
     .select('body')
     .append('div')
-    .attr('class', 'matrix-tooltip')
+    .attr('class', `matrix-tooltip-${id}`)
     .style('background-color', theme.colors.background.primary)
     .style('font-family', theme.typography.fontFamily.sansSerif)
     .style('font-color', theme.colors.text.primary)
@@ -347,6 +348,16 @@ function truncateLabel(text, width) {
  */
 function matrix(rowNames, colNames, matrix, id, height, options, legend) {
   const theme = useTheme2();
+
+  useEffect(() => {
+    return () => {
+      document.querySelectorAll(`.matrix-tooltip-${id}`).forEach(function(el) {
+        // Remove tooltip element when panel is unloaded
+        el.remove();
+      });
+    };
+  });
+
   const ref = useD3((svg) => {
     createViz(svg, id, height, rowNames, colNames, matrix, options, theme, legend);
   });
