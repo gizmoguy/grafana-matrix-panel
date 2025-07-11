@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { useD3 } from './useD3.js';
 import * as d3 from './d3.min.js';
-import { useTheme2 } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 /** Create the matrix diagram using d3.
  * @param {*} elem The parent svg element that will house this diagram
@@ -12,8 +14,9 @@ import { useTheme2 } from '@grafana/ui';
  * @param {string} target The data series that will act as * the target
  * @param {string} val The data series that will act as the value
  * @param {GrafanaTheme} theme
+ * @param {CSSReturnValue} styles
  */
-function createViz(elem, id, height, rowNames, colNames, matrix, options, theme, legend) {
+function createViz(elem, id, height, rowNames, colNames, matrix, options, theme, legend, styles) {
   const srcText = options.sourceText,
     targetText = options.targetText,
     valText = options.valueText,
@@ -72,18 +75,10 @@ function createViz(elem, id, height, rowNames, colNames, matrix, options, theme,
   //and be moved into place on hover
   //on mouse out the div will move back to 0,0 so
   //as not to be covering other boxes we want to hover
-  var tooltip = d3
+  const tooltip = d3
     .select('body')
     .append('div')
-    .attr('class', `matrix-tooltip-${id}`)
-    .style('background-color', theme.colors.background.primary)
-    .style('font-family', theme.typography.fontFamily.sansSerif)
-    .style('font-color', theme.colors.text.primary)
-    .style('box-shadow', '3px 3px 4px lightgray')
-    .style('padding', '5px')
-    .style('z-index', '500')
-    .style('position', 'absolute')
-    .style('width', 'fit-content')
+    .attr('class', `${styles.tooltip} matrix-tooltip-${id}`)
     .style('opacity', 0);
 
   // append the svg object to the body of the page
@@ -113,7 +108,7 @@ function createViz(elem, id, height, rowNames, colNames, matrix, options, theme,
   svg
     .selectAll('text')
     .attr('font-size', txtSize + 'em')
-    .style('font-family', theme.typography.fontFamily.sansSerif)
+    .style('font-family', theme.typography.fontFamily)
     .attr('fill', theme.colors.text.primary)
     .call(truncateLabel, txtLength)
     .on('mouseover', function (event, d) {
@@ -208,13 +203,27 @@ function createViz(elem, id, height, rowNames, colNames, matrix, options, theme,
         //like the mouseover above go ahead and render the text so we can calculate its size
         //and position correctly.
         tooltip.html(() => {
-          var thisDisplay = d.display;
-          var text = `<p><b>${srcText}:</b> ${d.row}
-            <br>
-            <b>${targetText}:</b> ${d.col}
-            <br>
-            <b>${valText}:</b> ${thisDisplay.text} ${thisDisplay.suffix ? thisDisplay.suffix : ''}
-            </p>`;
+          const thisDisplay = d.display;
+          const text = `<div class="${styles.tooltipTable}">
+  <div class="${styles.tooltipTableCell}">
+    <div class="${styles.tooltipTableRowLabel}">${srcText}</div>
+  </div>
+  <div class="${styles.tooltipTableCell}">
+    <div class="${styles.tooltipTableRowValue}">${d.row}</div>
+  </div>
+  <div class="${styles.tooltipTableCell}">
+    <div class="${styles.tooltipTableRowLabel}">${targetText}</div>
+  </div>
+  <div class="${styles.tooltipTableCell}">
+    <div class="${styles.tooltipTableRowValue}">${d.col}</div>
+  </div>
+  <div class="${styles.tooltipTableCell}">
+    <div class="${styles.tooltipTableRowLabel}">${valText}</div>
+  </div>
+  <div class="${styles.tooltipTableCell}">
+    <div class="${styles.tooltipTableRowValue}">${thisDisplay.text} ${thisDisplay.suffix ? thisDisplay.suffix : ''}</div>
+  </div>
+</div>`;
           return text;
         });
 
@@ -336,6 +345,43 @@ function truncateLabel(text, width) {
   });
 }
 
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    tooltip: css`
+      background-color: ${theme.components.tooltip.background};
+      color: ${theme.components.tooltip.text};
+      font-family: ${theme.typography.fontFamily};
+      font-size: ${theme.typography.size.sm};
+      font-weight: ${theme.typography.fontWeightRegular};
+      border: 1px solid ${theme.colors.border.weak};
+      border-radius: ${theme.shape.radius.default}:
+      box-shadow: ${theme.shadows.z3};
+      padding: 5px;
+      z-index: 500;
+      position: absolute;
+      width: fit-content;
+    `,
+    tooltipTable: css`
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 2px;
+      padding: 3px;
+    `,
+    tooltipTableCell: css`
+      display: flex;
+      -webkit-box-align: center;
+      align-items: center;
+    `,
+    tooltipTableRowLabel: css`
+      color: ${theme.colors.text.secondary};
+      margin-right: 16px;
+    `,
+    tooltipTableRowValue: css`
+      font-weight: ${theme.typography.fontWeightMedium};
+    `,
+  };
+};
+
 /**
  *
  * @param {*} data Data for the chord diagram
@@ -348,6 +394,7 @@ function truncateLabel(text, width) {
  */
 function matrix(rowNames, colNames, matrix, id, height, options, legend) {
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     return () => {
@@ -359,7 +406,7 @@ function matrix(rowNames, colNames, matrix, id, height, options, legend) {
   });
 
   const ref = useD3((svg) => {
-    createViz(svg, id, height, rowNames, colNames, matrix, options, theme, legend);
+    createViz(svg, id, height, rowNames, colNames, matrix, options, theme, legend, styles);
   });
   return ref;
 }
