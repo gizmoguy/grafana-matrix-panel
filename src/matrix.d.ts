@@ -1,7 +1,10 @@
+import { DataMatrixCell } from './types';
+
 export function matrix(
   rowNames: any, 
   colNames: any, 
-  matrix: any,
+  series: string[],
+  matrix: DataMatrixCell[][],
   id: number,
   height: number,
   options: any,

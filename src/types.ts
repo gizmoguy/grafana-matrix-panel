@@ -1,7 +1,11 @@
+import { DisplayValue, LinkModel } from '@grafana/data';
+
 export interface MatrixOptions {
   sourceField: string;
   targetField: string;
-  valueField: string;
+  values: number;
+  valueField1: string;
+  valueField2: string;
   cellSize: number;
   cellPadding: number;
   txtLength: number;
@@ -10,7 +14,8 @@ export interface MatrixOptions {
   defaultColor: string;
   sourceText: string;
   targetText: string;
-  valueText: string;
+  valueText1: string;
+  valueText2: string;
   addUrl: boolean;
   url: string;
   urlVar1: string;
@@ -24,3 +29,31 @@ export interface MatrixOptions {
   legendType: string;
   thresholds: any[];
 }
+
+export type MatrixData = {
+  rows: string[];
+  columns: string[];
+  series: string[];
+  data: DataMatrixCell[][];
+  legend: LegendData[];
+};
+
+export type MatrixDataError = {
+  error: string;
+};
+
+export type DataMatrixCell = {
+  row: string;
+  col: string;
+  vals: Array<{
+    value: number;
+    color: string;
+    display: DisplayValue;
+    url: LinkModel | undefined;
+  }>;
+};
+
+export type LegendData = {
+  label: string;
+  color: string;
+};

@@ -1,4 +1,4 @@
-import { FieldOverrideContext, getFieldDisplayName, PanelPlugin, FieldConfigProperty } from '@grafana/data';
+import { Field, FieldType, PanelPlugin, FieldConfigProperty } from '@grafana/data';
 // import { standardOptionsCompat } from 'grafana-plugin-support';
 import { MatrixOptions } from './types';
 import { EsnetMatrix } from './EsnetMatrix';
@@ -13,11 +13,8 @@ import { EsnetMatrix } from './EsnetMatrix';
  * @return {*} { builder: PanelOptionsEditorBuilder<NetSageSankeyOptions> }
  */
 const OptionsCategory = ['Display'];
-const URLCategory = ['Link Options'];
 const RowOptions = ['Row/Column Options'];
 
-const urlBool = (addUrl: boolean) => (config: MatrixOptions) => config.addUrl === addUrl;
-// const eurlOtherBool = (urlOther: boolean) => (config: MatrixOptions) => config.urlOther === urlOther;
 const staticBool = (inputList: boolean) => (config: MatrixOptions) => config.inputList === inputList;
 const legendBool = (showLegend: boolean) => (config: MatrixOptions) => config.showLegend === showLegend;
 
@@ -39,8 +36,55 @@ plugin.useFieldConfig({
   },
   disableStandardOptions: [
     FieldConfigProperty.NoValue,
-    FieldConfigProperty.Links,
   ]
+});
+
+plugin.setMigrationHandler((panel: any) => {
+  const valueField = panel.options?.valueField;
+  if (valueField !== undefined) {
+    // Rename valueField to valueField1
+    panel.options.valueField1 = valueField;
+    delete panel.options.valueField;
+  }
+
+  const valueText = panel.options?.valueText;
+  if (valueText !== undefined) {
+    // Rename valueText to valueText1
+    panel.options.valueText1 = valueText;
+    delete panel.options.valueText;
+  }
+
+  if (panel.options?.addUrl) {
+    // Update data link configuration
+    let url = panel.options?.url;
+    const sourceField = panel.options?.sourceField;
+    const targetField = panel.options?.targetField;
+    if (url !== undefined) {
+      const urlVar1 = panel.options?.urlVar1;
+      if (urlVar1 !== undefined && sourceField !== undefined) {
+        url = url.concat('&var-' + urlVar1 + '=${__data.fields.'+sourceField+'}');
+      }
+      const urlVar2 = panel.options?.urlVar2;
+      if (urlVar2 !== undefined && targetField !== undefined) {
+        url = url.concat('&var-' + urlVar2 + '=${__data.fields.'+targetField+'}');
+      }
+
+      if (!panel.fieldConfig.defaults.links) {
+        panel.fieldConfig.defaults.links = [];
+      }
+      panel.fieldConfig.defaults.links.push({
+        'title': 'Show details',
+        'url': url,
+      });
+    }
+
+    delete panel.options.addUrl;
+    delete panel.options.url;
+    delete panel.options.urlVar1;
+    delete panel.options.urlVar2;
+  }
+
+  return panel.options;
 });
 
 plugin.setPanelOptions((builder) => {
@@ -65,76 +109,55 @@ plugin.setPanelOptions((builder) => {
     category: RowOptions,
     showIf: staticBool(true),
   });
-  builder.addSelect({
+  builder.addFieldNamePicker({
     path: 'sourceField',
     name: 'Rows Field',
     description: 'Select the field that should be used for the rows',
     category: RowOptions,
     settings: {
-      allowCustomValue: false,
-      options: [],
-      getOptions: async (context: FieldOverrideContext) => {
-        const options = [];
-        if (context && context.data) {
-          for (const frame of context.data) {
-            for (const field of frame.fields) {
-              const name = getFieldDisplayName(field, frame, context.data);
-              const value = name;
-              options.push({ value, label: name });
-            }
-          }
-        }
-        return Promise.resolve(options);
-      },
+      filter: (field: Field) => field.type === FieldType.string,
     },
-    // defaultValue: options[0],
   });
-  builder.addSelect({
+  builder.addFieldNamePicker({
     path: 'targetField',
     name: 'Columns Field',
     description: 'Select the field to use for the columns',
     category: RowOptions,
     settings: {
-      allowCustomValue: false,
-      options: [],
-      getOptions: async (context: FieldOverrideContext) => {
-        const options = [];
-        if (context && context.data) {
-          for (const frame of context.data) {
-            for (const field of frame.fields) {
-              const name = getFieldDisplayName(field, frame, context.data);
-              const value = name;
-              options.push({ value, label: name });
-            }
-          }
-        }
-        return Promise.resolve(options);
-      },
+      filter: (field: Field) => field.type === FieldType.string,
     },
   });
-  builder.addSelect({
-    path: 'valueField',
+  builder.addRadio({
+    path: 'values',
+    name: 'Values',
+    description: 'Number of values to display',
+    category: RowOptions,
+    settings: {
+      options: [
+        { value: 1, label: '1' },
+        { value: 2, label: '2' },
+      ],
+    },
+    defaultValue: 1,
+  });
+  builder.addFieldNamePicker({
+    path: 'valueField1',
     name: 'Value Field',
     description: 'Select the numeric field used to color the matrix cells.',
     category: RowOptions,
     settings: {
-      allowCustomValue: false,
-      options: [],
-      getOptions: async (context: FieldOverrideContext) => {
-        const options = [];
-        if (context && context.data) {
-          for (const frame of context.data) {
-            for (const field of frame.fields) {
-              const name = getFieldDisplayName(field, frame, context.data);
-              const value = name;
-              options.push({ value, label: name });
-            }
-          }
-        }
-        return Promise.resolve(options);
-      },
+      filter: (field: Field) => field.type === FieldType.number,
     },
-    // defaultValue: options[2],
+  });
+  builder.addFieldNamePicker({
+    path: 'valueField2',
+    name: 'Second Value Field',
+    description: 'Select the second numeric field used to color the matrix cells.',
+    category: RowOptions,
+    showIf: (c) => c.values >= 2,
+    settings: {
+      filter: (field: Field) => field.type === FieldType.number,
+    },
   });
 
   ////////------------ General Matrix Options ----------------/////////////
@@ -163,7 +186,6 @@ plugin.setPanelOptions((builder) => {
     name: 'Source Text',
     description: 'The text to be displayed in the tooltip.',
     category: OptionsCategory,
-    defaultValue: 'From',
   });
 
   builder.addTextInput({
@@ -171,15 +193,21 @@ plugin.setPanelOptions((builder) => {
     name: 'Target Text',
     description: 'The text to be displayed in the tooltip.',
     category: OptionsCategory,
-    defaultValue: 'To',
   });
 
   builder.addTextInput({
-    path: 'valueText',
-    name: 'value Text',
+    path: 'valueText1',
+    name: 'Value Text',
     description: 'The text to be displayed in the tooltip.',
     category: OptionsCategory,
-    defaultValue: 'Value',
+  });
+
+  builder.addTextInput({
+    path: 'valueText2',
+    name: 'Second Value Text',
+    description: 'The text to be displayed in the tooltip.',
+    category: OptionsCategory,
+    showIf: (c) => c.values >= 2,
   });
 
   builder.addNumberInput({
@@ -252,48 +280,4 @@ plugin.setPanelOptions((builder) => {
     category: OptionsCategory,
     defaultValue: '#E6E6E6',
   });
-
-  /////////----------- Link URL options ---------------////////////////
-  builder.addBooleanSwitch({
-    path: 'addUrl',
-    name: 'Add Data Link',
-    category: URLCategory,
-    defaultValue: false,
-  });
-  builder.addTextInput({
-    path: 'url',
-    name: 'Link URL',
-    description: 'URL to go to when square is clicked.',
-    category: URLCategory,
-    showIf: urlBool(true),
-  });
-  builder.addTextInput({
-    path: 'urlVar1',
-    name: 'Variable 1',
-    description: 'The name of the template variable to pass the source label to',
-    category: URLCategory,
-    showIf: urlBool(true),
-  });
-  builder.addTextInput({
-    path: 'urlVar2',
-    name: 'Variable 2',
-    description: 'The name of the template variable to pass the target label to',
-    category: URLCategory,
-    showIf: urlBool(true),
-  });
-  // builder.addBooleanSwitch({
-  //   path: 'urlOther',
-  //   name: 'Append more text',
-  //   description: 'Ex: date',
-  //   category: URLCategory,
-  //   defaultValue: true,
-  //   showIf: urlBool(true),
-  // });
-  // builder.addTextInput({
-  //   path: 'urlOtherText',
-  //   name: 'Text',
-  //   description: 'Other text to append to URL',
-  //   category: URLCategory,
-  //   showIf: urlOtherBool(true),
-  // });
 });

@@ -8,33 +8,35 @@ import { useStyles2, useTheme2 } from '@grafana/ui';
 /** Create the matrix diagram using d3.
  * @param {*} elem The parent svg element that will house this diagram
  * @param {*} id The panel id
- * @param {number} height The current height of the panel
- * @param {*} data The data that will populate the diagram
+ * @param {string[]} seriesNames Series names
+ * @param {DataMatrixCell[][]} matrix The data that will populate the diagram
  * @param {string} src The data series that will act as the source
  * @param {string} target The data series that will act as * the target
  * @param {string} val The data series that will act as the value
  * @param {GrafanaTheme} theme
  * @param {CSSReturnValue} styles
  */
-function createViz(elem, id, height, rowNames, colNames, matrix, options, theme, legend, styles) {
-  const srcText = options.sourceText,
-    targetText = options.targetText,
-    valText = options.valueText,
-    cellSize = options.cellSize,
+function createViz(
+  elem,
+  id,
+  rowNames,
+  colNames,
+  seriesNames,
+  matrix,
+  options,
+  theme,
+  legend,
+  styles
+) {
+  const cellSize = options.cellSize,
     cellPadding = options.cellPadding / 100, // convert the cellPadding integer to a float that can be used by d3
     txtLength = options.txtLength,
     txtSize = options.txtSize / 10, //convert this val to EM scaling 90 = .9em 100 = 1em ... etc
-    linkURL = options.url,
-    urlVar1 = options.urlVar1,
-    urlVar2 = options.urlVar2,
     defaultColor = theme.visualization.getColorByName(options.defaultColor);
-
-  // urlOther = options.urlOther,
-  // urlOtherText = options.urlOtherText;
 
   // do a bit of work to setup the visual layout of the wiget --------
   if (elem === null) {
-    console.log('bailing after failing to find parent element');
+    console.error('bailing after failing to find parent element');
     return;
   }
   while (elem !== undefined && elem.firstChild) {
@@ -169,53 +171,28 @@ function createViz(elem, id, height, rowNames, colNames, matrix, options, theme,
   //needed because the underlying datastructure is a 2d array
   var rows = rectArea.selectAll('g').data(matrix).enter().append('g').attr('class', 'row');
 
-  var rects = rows
-    .selectAll('rect')
+  const cells = rows
+    .selectAll('g')
     .data(function (d, i) {
       outer.set(this, i);
       return d;
     })
     .enter()
+    .append('g')
     .append('a')
     .attr('xlink:href', (d) => {
-      if (linkURL) {
-        var thisURL = linkURL;
-        if (urlVar1) {
-          thisURL = thisURL.concat(`&var-${urlVar1}=${d.row}`);
-        }
-        if (urlVar2) {
-          thisURL = thisURL.concat(`&var-${urlVar2}=${d.col}`);
-        }
-        return thisURL;
+      if (d.vals.length >= 1 && d.vals[0].url) {
+        return d.vals[0].url.href;
       }
     })
-    .append('rect')
-    .attr('id', `rect-${id}`)
-    .attr('x', function (d, i, j) {
-      return x(colNames[i]);
-    })
-    .attr('y', function (d, i, j) {
-      var outer_counter = outer.get(this);
-      return y(rowNames[outer_counter]);
-    })
-    .attr('width', x.bandwidth())
-    .attr('height', y.bandwidth())
-    //this places a 'data' attribute into the HTML to make debugging easier. Allows you to see the inner/outer loop counts and the datum used
-    .attr('data', function (d, i) {
-      var outer_counter = outer.get(this);
-      var str = '' + outer_counter + ':' + i + ' ' + rowNames[outer_counter] + ':' + colNames[i] + ' ' + d;
-      return str;
-    })
-    .attr('fill', (d) => {
-      if (d.color) {
-        return d.color;
-      } else {
-        return defaultColor;
+    .attr('xlink:target', (d) => {
+      if (d.vals.length >= 1 && d.vals[0].url) {
+        return d.vals[0].url.target;
       }
     })
     // the tooltip for boxes
     .on('mouseover', function (event, d) {
-      if (d != -1) {
+      if (d.vals.length >= 1) {
         //turn down the opacity slightly to show the hover
         d3.select(this)
           // .attr('opacity', '.75')
@@ -226,27 +203,29 @@ function createViz(elem, id, height, rowNames, colNames, matrix, options, theme,
         //like the mouseover above go ahead and render the text so we can calculate its size
         //and position correctly.
         tooltip.html(() => {
-          const thisDisplay = d.display;
-          const text = `<div class="${styles.tooltipTable}">
+          let text = `<div class="${styles.tooltipTable}">
   <div class="${styles.tooltipTableCell}">
-    <div class="${styles.tooltipTableRowLabel}">${srcText}</div>
+    <div class="${styles.tooltipTableRowLabel}">${options.sourceText ? options.sourceText : seriesNames[0]}</div>
   </div>
   <div class="${styles.tooltipTableCell}">
     <div class="${styles.tooltipTableRowValue}">${d.row}</div>
   </div>
   <div class="${styles.tooltipTableCell}">
-    <div class="${styles.tooltipTableRowLabel}">${targetText}</div>
+    <div class="${styles.tooltipTableRowLabel}">${options.targetText ? options.targetText : seriesNames[1]}</div>
   </div>
   <div class="${styles.tooltipTableCell}">
     <div class="${styles.tooltipTableRowValue}">${d.col}</div>
+  </div>`;
+        d.vals.forEach((v, i) => {
+            const valueText = (i === 0) ? options.valueText1 : options.valueText2;
+            text += `<div class="${styles.tooltipTableCell}">
+    <div class="${styles.tooltipTableRowLabel}">${valueText ? valueText : seriesNames[2 + i]}</div>
   </div>
   <div class="${styles.tooltipTableCell}">
-    <div class="${styles.tooltipTableRowLabel}">${valText}</div>
-  </div>
-  <div class="${styles.tooltipTableCell}">
-    <div class="${styles.tooltipTableRowValue}">${thisDisplay.text} ${thisDisplay.suffix ? thisDisplay.suffix : ''}</div>
-  </div>
-</div>`;
+    <div class="${styles.tooltipTableRowValue}">${v.display.text} ${v.display.suffix ? v.display.suffix : ''}</div>
+  </div>`;
+        });
+            text += `</div>`;
           return text;
         });
         tooltip
@@ -283,11 +262,74 @@ function createViz(elem, id, height, rowNames, colNames, matrix, options, theme,
         });
     })
     .on('click', function (d) {
-      if(linkURL) {
-        // d3.select(this).remove();
+      if (d.vals.length >= 1 && d.vals[0].url) {
         tooltip.remove();
       }
     });
+
+    cells
+      .append('rect')
+      .attr('id', `rect-${id}`)
+      .attr('x', function (d, i, j) {
+        return x(colNames[i]);
+      })
+      .attr('y', function (d, i, j) {
+        var outer_counter = outer.get(this);
+        return y(rowNames[outer_counter]);
+      })
+      .attr('width', x.bandwidth())
+      .attr('height', y.bandwidth())
+      //this places a 'data' attribute into the HTML to make debugging easier. Allows you to see the inner/outer loop counts and the datum used
+      .attr('data', function (d, i) {
+        var outer_counter = outer.get(this);
+        var str = `${outer_counter}:${i} ${rowNames[outer_counter]}:${colNames[i]}`;
+        if (d.vals.length >= 1) {
+          str += ` ${d.vals[0].value}`;
+        }
+        return str;
+      })
+      .attr('fill', (d) => {
+        if (d.vals.length >= 1 && d.vals[0].color) {
+          return d.vals[0].color;
+        }
+        return defaultColor;
+      });
+
+    if (options.values >= 2) {
+      cells
+        .append('polygon')
+        .attr('id', `triangle-${id}`)
+        .attr('points', function (d, i, j) {
+          const outer_counter = outer.get(this);
+          const xPos = x(colNames[i]);
+          const yPos = y(rowNames[outer_counter]);
+          const width = x.bandwidth();
+          const height = y.bandwidth();
+
+          return `${xPos + width},${yPos} ${xPos + width},${yPos + height} ${xPos},${yPos + height}`;
+        })
+        //this places a 'data' attribute into the HTML to make debugging easier. Allows you to see the inner/outer loop counts and the datum used
+        .attr('data', function (d, i) {
+          var outer_counter = outer.get(this);
+          var str = `${outer_counter}:${i} ${rowNames[outer_counter]}:${colNames[i]}`;
+          if (d.vals.length >= 2) {
+            str += ` ${d.vals[1].value}`;
+          }
+          return str;
+        })
+        .attr('opacity', (d) => {
+          if (d.vals.length >= 2) {
+            return 1;
+          }
+          return 0;
+        })
+        .attr('fill', (d) => {
+          if (d.vals.length >= 2 && d.vals[1].color) {
+            return d.vals[1].color;
+          }
+          return defaultColor;
+        });
+    }
 
   ////// LEGEND ////////////
   if (options.showLegend) {
@@ -435,7 +477,8 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 /**
  *
- * @param {*} data Data for the chord diagram
+ * @param {string[]} seriesNames Series names
+ * @param {DataMatrixCell[][]} matrix Data for the matrix diagram
  * @param {*} id The panel id
  * @param {string} src The data series that will act as the source
  * @param {string} target The data series that will act as * the target
@@ -443,7 +486,7 @@ const getStyles = (theme: GrafanaTheme2) => {
  * @param {number} height Height of panel
  * @return {*} A d3 callback
  */
-function matrix(rowNames, colNames, matrix, id, height, options, legend) {
+function matrix(rowNames, colNames, seriesNames, matrix, id, height, options, legend) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -457,7 +500,18 @@ function matrix(rowNames, colNames, matrix, id, height, options, legend) {
   });
 
   const ref = useD3((svg) => {
-    createViz(svg, id, height, rowNames, colNames, matrix, options, theme, legend, styles);
+    createViz(
+      svg,
+      id,
+      rowNames,
+      colNames,
+      seriesNames,
+      matrix,
+      options,
+      theme,
+      legend,
+      styles
+    );
   });
   return ref;
 }
