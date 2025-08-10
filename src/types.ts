@@ -23,8 +23,8 @@ export interface MatrixOptions {
   urlOther: boolean;
   urlOtherText: string;
   inputList: boolean;
-  staticRows: string[];
-  staticColumns: string[];
+  staticRows: string;
+  staticColumns: string;
   showLegend: boolean;
   legendType: string;
   thresholds: any[];

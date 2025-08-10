@@ -9,7 +9,7 @@ import * as Matrix from './matrix.js';
 // import * as Legend from 'matrixLegend.js';
 
 interface Props extends PanelProps<MatrixOptions> {
-  fieldConfig: any;
+  fieldConfig: FieldConfigSource;
   options: MatrixOptions;
 }
 
