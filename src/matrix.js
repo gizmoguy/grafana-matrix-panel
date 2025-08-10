@@ -121,14 +121,37 @@ function createViz(elem, id, height, rowNames, colNames, matrix, options, theme,
 
       // tooltip for label
       tooltip
+        .interrupt()
         .style('left', event.pageX - divSize.width + 'px')
         //place the tooltip 5 pixels above the box they hovered
         .style('top', event.pageY - divSize.height - 5 + 'px')
+        .transition()
+        .duration(150)
         .style('opacity', 1);
+    })
+    .on('mousemove', function (event, d) {
+        //to center the tooltip appropriately we need to find the rendered width of both the
+        //the box they hovered and of the tooltip with the text in it.
+        var divSize = tooltip.node().getBoundingClientRect();
+
+        tooltip
+          .style('left', event.pageX - divSize.width + 'px')
+          //place the tooltip 5 pixels above the box they hovered
+          .style('top', event.pageY - divSize.height - 5 + 'px')
     })
     .on('mouseout', function (d, i) {
       d3.select(this).attr('opacity', '1');
-      tooltip.style('opacity', 0).style('left', '0px').style('top', '0px');
+      tooltip
+        .interrupt()
+        .transition()
+        .delay(100)
+        .duration(150)
+        .style('opacity', 0)
+        .on('end', () => {
+          tooltip
+            .style('left', '0px')
+            .style('top', '0px');
+        });
     });
 
   //build the matrix /////////////////////////////////////////
@@ -226,14 +249,19 @@ function createViz(elem, id, height, rowNames, colNames, matrix, options, theme,
 </div>`;
           return text;
         });
-
         tooltip
-          // .style('left', rect.left + rect.width - divSize.width / 2 + 'px')
-          // .style('top', rect.top - divSize.height - 5 + 'px')
+          .interrupt()
           .style('left', event.pageX + 5 + 'px')
           .style('top', event.pageY + 5 + 'px')
+          .transition()
+          .duration(150)
           .style('opacity', 1);
       }
+    })
+    .on('mousemove', function (event, d) {
+        tooltip
+          .style('left', event.pageX + 5 + 'px')
+          .style('top', event.pageY + 5 + 'px')
     })
     .on('mouseout', function (d, i) {
       //reset the opacity and move the tooltip out of the way. If we dont move it it will prevent hovering over other boxes.
@@ -242,7 +270,17 @@ function createViz(elem, id, height, rowNames, colNames, matrix, options, theme,
         .attr('transform', 'translate(0, 0)')
         .attr('width', x.bandwidth())
         .attr('height', y.bandwidth());
-      tooltip.style('opacity', 0).style('left', '0px').style('top', '0px');
+      tooltip
+        .interrupt()
+        .transition()
+        .delay(100)
+        .duration(150)
+        .style('opacity', 0)
+        .on('end', () => {
+          tooltip
+            .style('left', '0px')
+            .style('top', '0px');
+        });
     })
     .on('click', function (d) {
       if(linkURL) {
