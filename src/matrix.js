@@ -85,8 +85,8 @@ function createViz(
     .style('opacity', 0);
 
   // append the svg object to the body of the page
-  var svgClass = `svg-${id}`;
-  var svg = d3
+  const svgClass = `svg-${id}`;
+  let svg = d3
     .select(elem)
     .append('svg')
     .attr('id', svgClass)
@@ -96,7 +96,7 @@ function createViz(
     .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
   // Build X scales and axis:
-  var x = d3.scaleBand().range([0, width]).domain(colNames).padding(cellPadding);
+  const x = d3.scaleBand().range([0, width]).domain(colNames).padding(cellPadding);
   svg.append('g').call(d3.axisTop(x)).select('.domain').remove();
 
   //rotate the labels on the X axis
@@ -104,7 +104,7 @@ function createViz(
   svg.selectAll('text').attr('style', 'text-anchor:start').attr('transform', 'translate(12,-12)rotate(-90)');
 
   // Build Y scales and axis:
-  var y = d3.scaleBand().range([height, 0]).domain(rowNames.slice().reverse()).padding(cellPadding);
+  const y = d3.scaleBand().range([height, 0]).domain(rowNames.slice().reverse()).padding(cellPadding);
   svg.append('g').call(d3.axisLeft(y)).select('.domain').remove();
 
   //the scale bands have created the labels on the axis now we need to make sure the styles are set and add the hover events
@@ -120,7 +120,7 @@ function createViz(
       //to center the tooltip appropriately we need to find the rendered width of both the
       //the box they hovered and of the tooltip with the text in it.
       // var rect = event.target.getBoundingClientRect();
-      var divSize = tooltip.node().getBoundingClientRect();
+      const divSize = tooltip.node().getBoundingClientRect();
 
       // tooltip for label
       tooltip
@@ -135,7 +135,7 @@ function createViz(
     .on('mousemove', function (event, d) {
         //to center the tooltip appropriately we need to find the rendered width of both the
         //the box they hovered and of the tooltip with the text in it.
-        var divSize = tooltip.node().getBoundingClientRect();
+        const divSize = tooltip.node().getBoundingClientRect();
 
         tooltip
           .style('left', event.pageX - divSize.width + 'px')
@@ -160,17 +160,17 @@ function createViz(
   //build the matrix /////////////////////////////////////////
 
   //use d3's local stuff to record where we are in the outer loop
-  var outer = d3.local();
+  const outer = d3.local();
 
-  var svg_g = d3.select('#' + svgClass).selectAll('svg > g');
+  const svg_g = d3.select('#' + svgClass).selectAll('svg > g');
 
   //create the area where we will put all the boxes
   const rectClass = `rectArea-${id}`;
-  var rectArea = svg_g.append('g').attr('class', rectClass);
+  const rectArea = svg_g.append('g').attr('class', rectClass);
 
   //this selection breaks the data down to the row level. This is
   //needed because the underlying datastructure is a 2d array
-  var rows = rectArea.selectAll('g').data(matrix).enter().append('g').attr('class', 'row');
+  const rows = rectArea.selectAll('g').data(matrix).enter().append('g').attr('class', 'row');
 
   const cells = rows
     .selectAll('g')
@@ -275,15 +275,15 @@ function createViz(
         return x(colNames[i]);
       })
       .attr('y', function (d, i, j) {
-        var outer_counter = outer.get(this);
+        const outer_counter = outer.get(this);
         return y(rowNames[outer_counter]);
       })
       .attr('width', x.bandwidth())
       .attr('height', y.bandwidth())
       //this places a 'data' attribute into the HTML to make debugging easier. Allows you to see the inner/outer loop counts and the datum used
       .attr('data', function (d, i) {
-        var outer_counter = outer.get(this);
-        var str = `${outer_counter}:${i} ${rowNames[outer_counter]}:${colNames[i]}`;
+        const outer_counter = outer.get(this);
+        let str = `${outer_counter}:${i} ${rowNames[outer_counter]}:${colNames[i]}`;
         if (d.vals.length >= 1) {
           str += ` ${d.vals[0].value}`;
         }
@@ -311,8 +311,8 @@ function createViz(
         })
         //this places a 'data' attribute into the HTML to make debugging easier. Allows you to see the inner/outer loop counts and the datum used
         .attr('data', function (d, i) {
-          var outer_counter = outer.get(this);
-          var str = `${outer_counter}:${i} ${rowNames[outer_counter]}:${colNames[i]}`;
+          const outer_counter = outer.get(this);
+          let str = `${outer_counter}:${i} ${rowNames[outer_counter]}:${colNames[i]}`;
           if (d.vals.length >= 2) {
             str += ` ${d.vals[1].value}`;
           }
@@ -334,9 +334,9 @@ function createViz(
 
   ////// LEGEND ////////////
   if (options.showLegend) {
-    var legendClass = `legend-${id}`;
+    const legendClass = `legend-${id}`;
 
-    var div = d3
+    d3
       .select(elem)
       .append('div')
       .attr('class', 'matrix-legend')
@@ -344,8 +344,8 @@ function createViz(
       .attr('id', legendClass);
 
 ////////////// range - bar //////////////////////
-    if (options.legendType == 'range') {
-      var svg = d3.select(`#${legendClass}`);
+    if (options.legendType === 'range') {
+      svg = d3.select(`#${legendClass}`);
       svg
         // legend bar starts at x=25, legend squares are 10x10, allow 9px per label character
         .attr(
@@ -380,7 +380,7 @@ function createViz(
         })
         .attr('y', 50)
         .text(function (d, i) {
-          if ((i == 0) | (i == legend.length - 1)) {
+          if ((i === 0) | (i === legend.length - 1)) {
             return d.label;
           } else {
             return;
@@ -389,7 +389,7 @@ function createViz(
         .attr('fill', theme.colors.text.primary);
     } else {
 /////////// categorical - circles ////////////////////////////
-      var svg = d3.select(`#${legendClass}`);
+      svg = d3.select(`#${legendClass}`);
       svg
         // legend bar starts at x=25, legend circles are drawn every 75px and have a 20px diameter,
         // allow 9px per label character
@@ -431,7 +431,7 @@ function createViz(
 
 function truncateLabel(text, width) {
   text.each(function () {
-    var label = d3.select(this).text();
+    let label = d3.select(this).text();
     if (label.length > width) {
       label = label.slice(0, width) + '...';
     }
@@ -489,6 +489,7 @@ const getStyles = (theme: GrafanaTheme2) => {
  * @return {SvgInHtml} A d3 callback
  */
 function matrix(rowNames, colNames, seriesNames, matrix, id, height, options, legend) {
+  /* eslint-disable react-hooks/rules-of-hooks */
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
