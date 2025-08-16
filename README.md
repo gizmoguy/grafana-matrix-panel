@@ -3,7 +3,7 @@
 This plugin creates a 2D matrix showing the relationship between 2 selected fields (source and target).
 Note: This is NOT inteded to use with time series data or large data sets.  It also will not render if there are >200 rows or columns
 
-![](https://github.com/esnet/esnet-matrix-panel/blob/master/src/img/matrix-plugin.png?raw=true)
+![](https://github.com/gizmoguy/grafana-matrix-panel/blob/master/src/img/matrix-plugin.png?raw=true)
 
 ## Options
 ### Display

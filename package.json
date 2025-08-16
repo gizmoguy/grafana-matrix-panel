@@ -1,7 +1,7 @@
 {
-  "name": "esnet-matrix-panel",
+  "name": "gizmoguy-matrix-panel",
   "version": "2.0.0",
-  "description": "ESnet Matrix Panel",
+  "description": "Matrix Panel",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
@@ -16,7 +16,7 @@
     "test:ci": "jest --passWithNoTests --maxWorkers 4",
     "typecheck": "tsc --noEmit"
   },
-  "author": "ESnet",
+  "author": "Brad Cowie",
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/eslint-config": "^8.0.0",
