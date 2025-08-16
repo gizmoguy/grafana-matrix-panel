@@ -1,7 +1,7 @@
 services:
   grafana:
     user: root
-    container_name: 'esnet-matrix-panel'
+    container_name: 'gizmoguy-matrix-panel'
 
     build:
       context: .
@@ -13,13 +13,13 @@ services:
     ports:
       - 3000:3000/tcp
     volumes:
-      - ../dist:/var/lib/grafana/plugins/esnet-matrix-panel
+      - ../dist:/var/lib/grafana/plugins/gizmoguy-matrix-panel
       - ../provisioning:/etc/grafana/provisioning
-      - ..:/root/esnet-matrix-panel
+      - ..:/root/gizmoguy-matrix-panel
 
     environment:
       NODE_ENV: development
-      GF_LOG_FILTERS: plugin.esnet-matrix-panel:debug
+      GF_LOG_FILTERS: plugin.gizmoguy-matrix-panel:debug
       GF_LOG_LEVEL: debug
       GF_DATAPROXY_LOGGING: 1
-      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: esnet-matrix-panel
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: gizmoguy-matrix-panel
