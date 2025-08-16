@@ -39,6 +39,11 @@ export function parseData(
   ) ?? series.fields[1];
   const valueFields: Field[] = [];
 
+  if (sourceField === undefined || targetField === undefined) {
+    // no data, bail
+    return { error: 'no data' };
+  }
+
   for (let i = 0; i < options.values; i++) {
     let field = undefined;
 
@@ -58,6 +63,11 @@ export function parseData(
     if (field !== undefined) {
       valueFields.push(field);
     }
+  }
+
+  if (valueFields.length === 0) {
+    // no data, bail
+    return { error: 'no data' };
   }
 
   const seriesNames: string[] = [
