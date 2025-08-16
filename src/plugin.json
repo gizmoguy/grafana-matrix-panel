@@ -15,7 +15,7 @@
     },
     "links": [
       {"name": "Website", "url": "https://github.com/gizmoguy/grafana-matrix-panel"},
-      {"name": "License", "url": "https://github.com/gizmoguy/grafana-matrix-panel/blob/master/LICENSE"}
+      {"name": "License", "url": "https://github.com/gizmoguy/grafana-matrix-panel/blob/main/LICENSE"}
     ],
     "screenshots": [
       {
