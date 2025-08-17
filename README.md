@@ -5,6 +5,13 @@ Note: This is NOT inteded to use with time series data or large data sets.  It a
 
 ![](https://github.com/gizmoguy/grafana-matrix-panel/blob/main/src/img/matrix-plugin.png?raw=true)
 
+This panel plugin is based on the [Matrix Panel Plugin](https://github.com/esnet/esnet-matrix-panel)
+by ESnet, but updated in a number of different ways, such as:
+
+  * Improved tooltips which render using the Grafana theme
+  * Support for Grafana data links
+  * Support for rendering multiple data series on the same matrix
+
 ## Options
 ### Display
 **Show Legend:** Adds legend to bottom of panel.
@@ -24,8 +31,3 @@ Note: This is NOT inteded to use with time series data or large data sets.  It a
 
 ### Colors
 The color of each square will be determined by the selected metric and the color choice in the **Standard Options**.
-
-
-
-
-
