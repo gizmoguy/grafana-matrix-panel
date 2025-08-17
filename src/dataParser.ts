@@ -114,8 +114,8 @@ export function parseData(
   }
 
   // sort row/col names with natural sort
-  rowNames.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  colNames.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  rowNames.sort((a, b) => a.toString().localeCompare(b.toString(), undefined, { numeric: true }));
+  colNames.sort((a, b) => a.toString().localeCompare(b.toString(), undefined, { numeric: true }));
 
   const numSquaresInMatrix = rowNames.length * colNames.length;
   if (numSquaresInMatrix > 50000) {
