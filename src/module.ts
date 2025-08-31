@@ -1,4 +1,4 @@
-import { Field, FieldType, PanelPlugin, FieldConfigProperty } from '@grafana/data';
+import { Field, FieldType, PanelPlugin, FieldConfigProperty, FieldConfigSource } from '@grafana/data';
 // import { standardOptionsCompat } from 'grafana-plugin-support';
 import { MatrixOptions } from './types';
 import { EsnetMatrix } from './EsnetMatrix';
@@ -39,7 +39,7 @@ plugin.useFieldConfig({
   ]
 });
 
-plugin.setMigrationHandler((panel: any) => {
+plugin.setMigrationHandler((panel: { options: any; fieldConfig: FieldConfigSource }) => {
   const valueField = panel.options?.valueField;
   if (valueField !== undefined) {
     // Rename valueField to valueField1
@@ -60,13 +60,24 @@ plugin.setMigrationHandler((panel: any) => {
     const sourceField = panel.options?.sourceField;
     const targetField = panel.options?.targetField;
     if (url !== undefined) {
+      const variableRegex = /\w+/;
       const urlVar1 = panel.options?.urlVar1;
-      if (urlVar1 !== undefined && sourceField !== undefined) {
-        url = url.concat('&var-' + urlVar1 + '=${__data.fields.'+sourceField+'}');
+      if (
+        urlVar1 !== undefined && urlVar1.match(variableRegex)
+        && sourceField !== undefined && sourceField.length >= 1
+      ) {
+        url = url.concat(
+          '&var-' + urlVar1 + '=${__data.fields["' + encodeURIComponent(sourceField) + '"]}',
+        );
       }
       const urlVar2 = panel.options?.urlVar2;
-      if (urlVar2 !== undefined && targetField !== undefined) {
-        url = url.concat('&var-' + urlVar2 + '=${__data.fields.'+targetField+'}');
+      if (
+        urlVar2 !== undefined && urlVar2.match(variableRegex)
+        && targetField !== undefined && targetField.length >= 1
+      ) {
+        url = url.concat(
+          '&var-' + urlVar2 + '=${__data.fields["' + encodeURIComponent(targetField) + '"]}',
+        );
       }
 
       if (!panel.fieldConfig.defaults.links) {
