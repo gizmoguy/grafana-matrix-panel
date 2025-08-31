@@ -186,7 +186,7 @@ export function parseData(
   const legendData: LegendData[] = [];
   if (options.showLegend) {
     let legendValues: any[] = [];
-    if (options.legendType === 'range') { 
+    if (options.legendType === 'range') {
       //get min & max, steps
       let min = undefined;
       let max = undefined;
@@ -234,10 +234,10 @@ export function parseData(
           text = text + ` ${valueFields[0].display(val).suffix}`;
         }
       }
-        legendData.push({
-          label: text,
-          color: colorMap(val),
-        });
+      legendData.push({
+        label: text,
+        color: colorMap(val),
+      });
     });
   }
   // console.log(legendData);
