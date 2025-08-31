@@ -64,10 +64,6 @@ function createViz(
     console.error('bailing after failing to find parent element');
     return;
   }
-  while (elem !== undefined && elem.firstChild) {
-    // clear out old contents
-    elem.removeChild(elem.lastChild);
-  }
 
   //find the length of the longest name. this will inform the margin and name truncation
   const longestColName = colNames.reduce((a, b) => {
@@ -96,6 +92,10 @@ function createViz(
     width = colNames.length * cellSize,
     height = rowNames.length * cellSize;
 
+  if (elem !== undefined) {
+    // clear out old contents
+    elem.replaceChildren();
+  }
 
   // append the svg object to the body of the page
   const svgClass = `svg-${id}`;
