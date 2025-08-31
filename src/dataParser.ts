@@ -191,8 +191,15 @@ export function parseData(
       let min = undefined;
       let max = undefined;
       for (const f of valueFields) {
-        const fieldMin = Math.min(...f.values.filter(x => typeof x === 'number'));
-        const fieldMax = Math.max(...f.values.filter(x => typeof x === 'number'));
+        const numericValues = f.values.filter(x => typeof x === 'number' && !isNaN(x));
+        if (numericValues.length === 0) {
+          // Skip field if no valid numbers
+          continue;
+        }
+
+        const fieldMin = Math.min(...numericValues);
+        const fieldMax = Math.max(...numericValues);
+
         if (min === undefined || fieldMin < min) {
           min = fieldMin;
         }
