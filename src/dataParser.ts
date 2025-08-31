@@ -28,15 +28,19 @@ export function parseData(
 
   // set fields
   const sourceField = series.fields.find((f: Field) =>
-    options.sourceField === f.name
-    || options.sourceField === f.config?.displayNameFromDS
-    || options.sourceField === getFieldDisplayName(f)
-  ) ?? series.fields[0];
+    options.sourceField !== undefined && (
+      options.sourceField === f.name
+      || options.sourceField === f.config?.displayNameFromDS
+      || options.sourceField === getFieldDisplayName(f)
+    )
+  ) ?? series.fields.find((f: Field) => f.type === FieldType.string);
   const targetField = series.fields.find((f: Field) =>
-    options.targetField === f.name
-    || options.targetField === f.config?.displayNameFromDS
-    || options.targetField === getFieldDisplayName(f)
-  ) ?? series.fields[1];
+    options.targetField !== undefined && (
+      options.targetField === f.name
+      || options.targetField === f.config?.displayNameFromDS
+      || options.targetField === getFieldDisplayName(f)
+    )
+  ) ?? series.fields.find((f: Field) => f.type === FieldType.string && f.name !== sourceField?.name);
   const valueFields: Field[] = [];
 
   if (sourceField === undefined || targetField === undefined) {
@@ -45,20 +49,14 @@ export function parseData(
   }
 
   for (let i = 0; i < options.values; i++) {
-    let field = undefined;
-
     const valueField = (i === 0) ? options.valueField1 : options.valueField2;
-    if (valueField !== undefined) {
-      field = series.fields.find((f: Field) =>
+    const field = series.fields.find((f: Field) =>
+      valueField !== undefined && (
         valueField === f.name
         || valueField === f.config?.displayNameFromDS
         || valueField === getFieldDisplayName(f)
-      );
-    }
-
-    if (field === undefined && i === 0) {
-      field = series.fields.find((f: Field) => f.type === FieldType.number);
-    }
+      )
+    ) ?? series.fields.find((f: Field) => f.type === FieldType.number && !valueFields.includes(f));
 
     if (field !== undefined) {
       valueFields.push(field);
