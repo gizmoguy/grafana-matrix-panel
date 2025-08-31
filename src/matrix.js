@@ -32,25 +32,25 @@ function getTooltip(id, tooltipClass) {
 /** Create the matrix diagram using d3.
  * @param {SvgInHtml} elem The parent svg element that will house this diagram
  * @param {number} id The panel id
+ * @param {MatrixOptions} options Panel configuration
  * @param {string[]} rowNames Row names
  * @param {string[]} colNames Column names
  * @param {string[]} seriesNames Series names
  * @param {DataMatrixCell[][]} matrix The data that will populate the diagram
- * @param {MatrixOptions} options Panel configuration
- * @param {GrafanaTheme} theme Grafana theme
  * @param {LegendData[]} legend Legend data
+ * @param {GrafanaTheme} theme Grafana theme
  * @param {CSSReturnValue} styles CSS styles
  */
 function createViz(
   elem,
   id,
+  options,
   rowNames,
   colNames,
   seriesNames,
   matrix,
-  options,
-  theme,
   legend,
+  theme,
   styles
 ) {
   const cellSize = options.cellSize,
@@ -497,17 +497,12 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 /**
  *
- * @param {string[]} rowNames Row names
- * @param {string[]} colNames Column names
- * @param {string[]} seriesNames Series names
- * @param {DataMatrixCell[][]} matrix Data for the matrix diagram
  * @param {number} id The panel id
- * @param {number} height Height of panel
  * @param {MatrixOptions} options Panel configuration
- * @param {LegendData[]} legend Legend data
+ * @param {MatrixData | MatrixDataError} matrix Data for the matrix diagram
  * @return {SvgInHtml} A d3 callback
  */
-function matrix(rowNames, colNames, seriesNames, matrix, id, height, options, legend) {
+function matrix(id, options, matrix) {
   /* eslint-disable react-hooks/rules-of-hooks */
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -521,20 +516,37 @@ function matrix(rowNames, colNames, seriesNames, matrix, id, height, options, le
     };
   });
 
-  const ref = useD3((svg) => {
-    createViz(
-      svg,
-      id,
-      rowNames,
-      colNames,
-      seriesNames,
-      matrix,
-      options,
-      theme,
-      legend,
-      styles
-    );
-  });
+  const ref = useD3((container) => {
+    if ("error" in matrix) {
+      console.error(matrix.error);
+      switch (matrix.error) {
+        case "too many inputs": {
+          container.innerHTML = "Too many data points! Try adding limits to your query.";
+          break;
+        }
+        case "no data": {
+          container.innerHTML = "No Data";
+          break;
+        }
+        default: {
+          container.innerHTML = "Unknown Error";
+        }
+      }
+    } else {
+      createViz(
+        container,
+        id,
+        options,
+        matrix.rows,
+        matrix.columns,
+        matrix.series,
+        matrix.data,
+        matrix.legend,
+        theme,
+        styles
+      );
+    }
+  }, id, options, matrix, theme, styles);
   return ref;
 }
 

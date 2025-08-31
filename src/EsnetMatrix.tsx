@@ -13,38 +13,20 @@ interface Props extends PanelProps<MatrixOptions> {
 
 export const EsnetMatrix: React.FC<Props> = ({ options, data, width, height, id }) => {
   const theme = useTheme2();
-  const parsedData = parseData(data, options, theme);
-
-  if ('error' in parsedData) {
-    console.error(parsedData.error);
-    switch (parsedData.error) {
-      case 'too many inputs': {
-        return <div>Too many data points! Try adding limits to your query.</div>;
-      }
-      case 'no data': {
-        return <div>No Data</div>;
-      }
-      default: {
-        return <div>Unknown Error</div>;
-      }
-    }
-  }
+  const parsedData = React.useMemo(() => {
+    return parseData(data, options, theme);
+  }, [data, options, theme]);
 
   const ref = Matrix.matrix(
-    parsedData.rows,
-    parsedData.columns,
-    parsedData.series,
-    parsedData.data,
     id,
-    height,
     options,
-    parsedData.legend,
+    parsedData,
   );
-  const thisPanelClass = `matrix-panel-${id}`;
+  const matrixClass = `matrix-panel-${id}`;
 
   return (
     <ScrollContainer minHeight="100%">
-      <div ref={ref} id={thisPanelClass}></div>
+      <div ref={ref} id={matrixClass}></div>
     </ScrollContainer>
   );
 };
