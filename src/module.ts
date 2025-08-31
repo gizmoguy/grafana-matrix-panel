@@ -1,4 +1,4 @@
-import { Field, FieldType, PanelPlugin, FieldConfigProperty } from '@grafana/data';
+import { Field, FieldType, PanelPlugin, FieldConfigProperty, FieldConfigSource } from '@grafana/data';
 // import { standardOptionsCompat } from 'grafana-plugin-support';
 import { MatrixOptions } from './types';
 import { EsnetMatrix } from './EsnetMatrix';
@@ -39,7 +39,7 @@ plugin.useFieldConfig({
   ]
 });
 
-plugin.setMigrationHandler((panel: any) => {
+plugin.setMigrationHandler((panel: { options: any; fieldConfig: FieldConfigSource }) => {
   const valueField = panel.options?.valueField;
   if (valueField !== undefined) {
     // Rename valueField to valueField1
