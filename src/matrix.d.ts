@@ -1,12 +1,7 @@
-import { DataMatrixCell, LegendData } from './types';
+import { MatrixData, MatrixDataError, MatrixOptions } from './types';
 
 export function matrix(
-  rowNames: string[],
-  colNames: string[],
-  series: string[],
-  matrix: DataMatrixCell[][],
   id: number,
-  height: number,
   options: MatrixOptions,
-  legend: LegendData[],
+  matrix: MatrixData | MatrixDataError,
 ): LegacyRef<SVGSVGElement> | undefined;
