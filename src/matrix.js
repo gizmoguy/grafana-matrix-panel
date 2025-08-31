@@ -5,6 +5,30 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
+/** Create tooltip element for the matrix diagram.
+ * @param {number} id The panel id
+ * @param {string} tooltipClass CSS class to use for tooltip
+ * @return {Selection} A d3 div selection
+ */
+function getTooltip(id, tooltipClass) {
+  //we'll use this div as our tooltip.
+  //the div will be invisible except when in use
+  //the div will start at page coordinates 0,0
+  //and be moved into place on hover
+  //on mouse out the div will move back to 0,0 so
+  //as not to be covering other boxes we want to hover
+  let tooltip = d3.select(`.matrix-tooltip-${id}`);
+  if (tooltip.empty()) {
+    tooltip = d3
+      .select('body')
+      .append('div')
+      .attr('class', `${tooltipClass} matrix-tooltip-${id}`)
+      .style('opacity', 0);
+  }
+
+  return tooltip;
+}
+
 /** Create the matrix diagram using d3.
  * @param {SvgInHtml} elem The parent svg element that will house this diagram
  * @param {number} id The panel id
@@ -72,17 +96,6 @@ function createViz(
     width = colNames.length * cellSize,
     height = rowNames.length * cellSize;
 
-  //we'll use this div as our tooltip.
-  //the div will be invisible except when in use
-  //the div will start at page coordinates 0,0
-  //and be moved into place on hover
-  //on mouse out the div will move back to 0,0 so
-  //as not to be covering other boxes we want to hover
-  const tooltip = d3
-    .select('body')
-    .append('div')
-    .attr('class', `${styles.tooltip} matrix-tooltip-${id}`)
-    .style('opacity', 0);
 
   // append the svg object to the body of the page
   const svgClass = `svg-${id}`;
@@ -115,6 +128,8 @@ function createViz(
     .attr('fill', theme.colors.text.primary)
     .call(truncateLabel, txtLength)
     .on('mouseover', function (event, d) {
+      const tooltip = getTooltip(id, styles.tooltip);
+
       tooltip.html(d);
 
       //to center the tooltip appropriately we need to find the rendered width of both the
@@ -133,6 +148,8 @@ function createViz(
         .style('opacity', 1);
     })
     .on('mousemove', function (event, d) {
+      const tooltip = getTooltip(id, styles.tooltip);
+
         //to center the tooltip appropriately we need to find the rendered width of both the
         //the box they hovered and of the tooltip with the text in it.
         const divSize = tooltip.node().getBoundingClientRect();
@@ -143,6 +160,8 @@ function createViz(
           .style('top', event.pageY - divSize.height - 5 + 'px')
     })
     .on('mouseout', function (d, i) {
+      const tooltip = getTooltip(id, styles.tooltip);
+
       d3.select(this).attr('opacity', '1');
       tooltip
         .interrupt()
@@ -194,6 +213,8 @@ function createViz(
     // the tooltip for boxes
     .on('mouseover', function (event, d) {
       if (d.vals.length >= 1) {
+        const tooltip = getTooltip(id, styles.tooltip);
+
         //turn down the opacity slightly to show the hover
         d3.select(this)
           // .attr('opacity', '.75')
@@ -239,11 +260,15 @@ function createViz(
       }
     })
     .on('mousemove', function (event, d) {
+      const tooltip = getTooltip(id, styles.tooltip);
+
         tooltip
           .style('left', event.pageX + 5 + 'px')
           .style('top', event.pageY + 5 + 'px')
     })
     .on('mouseout', function (d, i) {
+      const tooltip = getTooltip(id, styles.tooltip);
+
       //reset the opacity and move the tooltip out of the way. If we dont move it it will prevent hovering over other boxes.
       d3.select(this)
         // .attr('opacity', '1')
@@ -262,11 +287,6 @@ function createViz(
             .style('top', '0px');
         });
     })
-    .on('click', function (d) {
-      if (d.vals.length >= 1 && d.vals[0].url) {
-        tooltip.remove();
-      }
-    });
 
     cells
       .append('rect')
