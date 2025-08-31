@@ -155,11 +155,14 @@ export function parseData(
     }
   }
 
+  const rowLookup = new Map(rowNames.map((name, idx) => [name, idx]));
+  const colLookup = new Map(colNames.map((name, idx) => [name, idx]));
+
   valueFields.forEach((f, i) => {
     f.values.forEach((v, j) => {
-      const r = rowNames.indexOf(sourceField.values[j]);
-      const c = colNames.indexOf(targetField.values[j]);
-      if (r > -1 && c > -1) {
+      const r = rowLookup.get(sourceField.values[j]);
+      const c = colLookup.get(targetField.values[j]);
+      if (r !== undefined && c !== undefined) {
         let url = undefined;
         if ((f.config.links?.length ?? 0) > 0 && f.getLinks) {
           const links = f.getLinks({ valueRowIndex: j });
