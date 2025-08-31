@@ -150,14 +150,14 @@ function createViz(
     .on('mousemove', function (event, d) {
       const tooltip = getTooltip(id, styles.tooltip);
 
-        //to center the tooltip appropriately we need to find the rendered width of both the
-        //the box they hovered and of the tooltip with the text in it.
-        const divSize = tooltip.node().getBoundingClientRect();
+      //to center the tooltip appropriately we need to find the rendered width of both the
+      //the box they hovered and of the tooltip with the text in it.
+      const divSize = tooltip.node().getBoundingClientRect();
 
-        tooltip
-          .style('left', event.pageX - divSize.width + 'px')
-          //place the tooltip 5 pixels above the box they hovered
-          .style('top', event.pageY - divSize.height - 5 + 'px')
+      tooltip
+        .style('left', event.pageX - divSize.width + 'px')
+        //place the tooltip 5 pixels above the box they hovered
+        .style('top', event.pageY - divSize.height - 5 + 'px')
     })
     .on('mouseout', function (d, i) {
       const tooltip = getTooltip(id, styles.tooltip);
@@ -261,10 +261,9 @@ function createViz(
     })
     .on('mousemove', function (event, d) {
       const tooltip = getTooltip(id, styles.tooltip);
-
-        tooltip
-          .style('left', event.pageX + 5 + 'px')
-          .style('top', event.pageY + 5 + 'px')
+      tooltip
+        .style('left', event.pageX + 5 + 'px')
+        .style('top', event.pageY + 5 + 'px')
     })
     .on('mouseout', function (d, i) {
       const tooltip = getTooltip(id, styles.tooltip);
