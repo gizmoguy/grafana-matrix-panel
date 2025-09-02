@@ -1,4 +1,12 @@
-import { Field, FieldType, PanelPlugin, FieldConfigProperty, FieldConfigSource } from '@grafana/data';
+import {
+  Field,
+  FieldConfigProperty,
+  FieldConfigSource,
+  FieldType,
+  PanelModel,
+  PanelPlugin,
+  PanelTypeChangedHandler,
+} from '@grafana/data';
 // import { standardOptionsCompat } from 'grafana-plugin-support';
 import { MatrixOptions } from './types';
 import { EsnetMatrix } from './EsnetMatrix';
@@ -39,29 +47,32 @@ plugin.useFieldConfig({
   ]
 });
 
-plugin.setMigrationHandler((panel: { options: any; fieldConfig: FieldConfigSource }) => {
-  const valueField = panel.options?.valueField;
+const updateMatrixOptions = (
+  options: any,
+  fieldConfig: FieldConfigSource,
+): Partial<MatrixOptions> => {
+  const valueField = options?.valueField;
   if (valueField !== undefined) {
     // Rename valueField to valueField1
-    panel.options.valueField1 = valueField;
-    delete panel.options.valueField;
+    options.valueField1 = valueField;
+    delete options.valueField;
   }
 
-  const valueText = panel.options?.valueText;
+  const valueText = options?.valueText;
   if (valueText !== undefined) {
     // Rename valueText to valueText1
-    panel.options.valueText1 = valueText;
-    delete panel.options.valueText;
+    options.valueText1 = valueText;
+    delete options.valueText;
   }
 
-  if (panel.options?.addUrl) {
+  if (options?.addUrl) {
     // Update data link configuration
-    let url = panel.options?.url;
-    const sourceField = panel.options?.sourceField;
-    const targetField = panel.options?.targetField;
+    let url = options?.url;
+    const sourceField = options?.sourceField;
+    const targetField = options?.targetField;
     if (url !== undefined) {
       const variableRegex = /\w+/;
-      const urlVar1 = panel.options?.urlVar1;
+      const urlVar1 = options?.urlVar1;
       if (
         urlVar1 !== undefined && urlVar1.match(variableRegex)
         && sourceField !== undefined && sourceField.length >= 1
@@ -70,7 +81,7 @@ plugin.setMigrationHandler((panel: { options: any; fieldConfig: FieldConfigSourc
           '&var-' + urlVar1 + '=${__data.fields["' + encodeURIComponent(sourceField) + '"]}',
         );
       }
-      const urlVar2 = panel.options?.urlVar2;
+      const urlVar2 = options?.urlVar2;
       if (
         urlVar2 !== undefined && urlVar2.match(variableRegex)
         && targetField !== undefined && targetField.length >= 1
@@ -80,23 +91,43 @@ plugin.setMigrationHandler((panel: { options: any; fieldConfig: FieldConfigSourc
         );
       }
 
-      if (!panel.fieldConfig.defaults.links) {
-        panel.fieldConfig.defaults.links = [];
+      if (!fieldConfig.defaults.links) {
+        fieldConfig.defaults.links = [];
       }
-      panel.fieldConfig.defaults.links.push({
+      fieldConfig.defaults.links.push({
         'title': 'Show details',
         'url': url,
       });
     }
 
-    delete panel.options.addUrl;
-    delete panel.options.url;
-    delete panel.options.urlVar1;
-    delete panel.options.urlVar2;
+    delete options.addUrl;
+    delete options.url;
+    delete options.urlVar1;
+    delete options.urlVar2;
   }
 
+  return options;
+};
+
+const matrixPanelMigrationHandler = (panel: PanelModel<MatrixOptions>): Partial<MatrixOptions> => {
+  updateMatrixOptions(panel.options, panel.fieldConfig);
   return panel.options;
-});
+};
+plugin.setMigrationHandler(matrixPanelMigrationHandler);
+
+const matrixChangedHandler: PanelTypeChangedHandler = (
+  panel,
+  prevPluginId,
+  prevOptions,
+  prevFieldConfig,
+) => {
+  if (prevPluginId === 'esnet-matrix-panel') {
+    updateMatrixOptions(prevOptions, panel.fieldConfig);
+    return prevOptions;
+  }
+  return {};
+};
+plugin.setPanelChangeHandler(matrixChangedHandler);
 
 plugin.setPanelOptions((builder) => {
   /////////--------- Row and Column options ---------////////////////
