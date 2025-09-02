@@ -1,6 +1,6 @@
 {
   "name": "gizmoguy-matrix-panel",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Matrix Panel",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
