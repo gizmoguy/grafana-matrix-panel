@@ -21,5 +21,4 @@ jobs:
       - uses: grafana/plugin-actions/create-plugin-update@create-plugin-update/v2.0.1
         with:
           node-version: 22
-          # Make sure to save the token in your repository secrets as `GH_PAT_TOKEN`
-          #token: ${{ secrets.GH_PAT_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
